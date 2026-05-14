@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SattvaX+ - Ayurveda Clinical Intelligence">
+    <title>SattvaX+ Clinical Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style_extras.css') }}?v=3">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <script>
+        // Auth gate: redirect to login if not authenticated
+        (function() {
+            var user = localStorage.getItem('sattvax_user');
+            if (!user) { window.location.href = '/login'; return; }
+            window._sattvaxUser = JSON.parse(user);
+        })();
+    </script>
+
+    <nav id="main-nav">
+        <div class="nav-brand">
+            <h1>SattvaX+ Assistant</h1>
+        </div>
+        <div style="display:flex; gap:1rem; align-items:center;">
+            <span id="user-greeting" style="color:rgba(255,255,255,0.8); font-size:0.9rem;"></span>
+            <a href="/dashboard" style="color:white; text-decoration:none; font-weight:600; padding:0.4rem 1rem; border:1px solid rgba(255,255,255,0.3); border-radius:6px; font-size:0.9rem; transition:all 0.25s ease;">Model Dashboard</a>
+            <a href="#" onclick="localStorage.removeItem('sattvax_user'); window.location.href='/login'; return false;" style="color:white; text-decoration:none; font-weight:600; padding:0.4rem 1rem; border:1px solid rgba(255,255,255,0.3); border-radius:6px; font-size:0.9rem; transition:all 0.25s ease; background:rgba(239,68,68,0.2);">Logout</a>
+        </div>
+    </nav>
+    <script>
+        document.getElementById('user-greeting').textContent = 'Welcome, ' + (window._sattvaxUser ? window._sattvaxUser.name : 'User');
+    </script>
+
+    <main>
+        <div class="container layout-grid">
+            <!-- Left Column: Input and Basic Info -->
+            <div class="column-left">
+                <section class="card" id="prediction-form-section">
+                    <h3>Clinical Input</h3>
+                    <form id="prediction-form">
+                        <div class="form-group">
+                            <label for="text-input">Patient Symptoms & History</label>
+                            <textarea 
+                                id="text-input" 
+                                name="text_input" 
+                                rows="5" 
+                                placeholder="Enter clinical text here..."
+                                required
+                            ></textarea>
+                        </div>
+                        <div class="action-buttons">
+                            <button type="submit" id="predict-btn" class="btn btn-primary">
+                                Analyze Text
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="card" id="examples-section">
+                    <h3>Quick Examples</h3>
+                    <p class="subtitle">Click an example to test the pipeline:</p>
+                    <div class="examples-grid">
+                        <button type="button" class="example-btn" data-text="The patient presented with severe Shirashoola and was advised to take Brahmi Vati twice a day.">The patient presented with severe Shirashoola and was advised to take Brahmi Vati twice a day.</button>
+                        <button type="button" class="example-btn" data-text="Amlapitta is commonly treated using Shatavari and Amalaki churna.">Amlapitta is commonly treated using Shatavari and Amalaki churna.</button>
+                        <button type="button" class="example-btn" data-text="Sandhigata Vata causes joint pain. Panchakarma therapy like Basti is highly effective.">Sandhigata Vata causes joint pain. Panchakarma therapy like Basti is highly effective.</button>
+                        <button type="button" class="example-btn" data-text="Patient complains of chronic Kasa and Shwasa. Recommended Vasavaleha and rest.">Patient complains of chronic Kasa and Shwasa. Recommended Vasavaleha and rest.</button>
+                        <button type="button" class="example-btn" data-text="For Twak Roga (skin diseases), Khadirarishta is an excellent blood purifier.">For Twak Roga (skin diseases), Khadirarishta is an excellent blood purifier.</button>
+                        <button type="button" class="example-btn" data-text="The individual is suffering from Nidranasha. Ashwagandha churna with warm milk is suggested before bedtime.">The individual is suffering from Nidranasha. Ashwagandha churna with warm milk is suggested before bedtime.</button>
+                        <button type="button" class="example-btn" data-text="Patient shows symptoms of Prameha. Given Shilajit and advised to manage Kapha dosha.">Patient shows symptoms of Prameha. Given Shilajit and advised to manage Kapha dosha.</button>
+                        <button type="button" class="example-btn" data-text="To treat Grahani, Takradhara procedure is very beneficial along with Musta.">To treat Grahani, Takradhara procedure is very beneficial along with Musta.</button>
+                        <button type="button" class="example-btn" data-text="Severe Udawarta observed. Patient advised to undergo Anuvasana Basti.">Severe Udawarta observed. Patient advised to undergo Anuvasana Basti.</button>
+                        <button type="button" class="example-btn" data-text="Kamala requires immediate attention. Prescribed Kutki and Pitta pacifying diet.">Kamala requires immediate attention. Prescribed Kutki and Pitta pacifying diet.</button>
+                        <button type="button" class="example-btn" data-text="For Amavata, dry fomentation (Valuka Sweda) and Eranda Sneha are prescribed.">For Amavata, dry fomentation (Valuka Sweda) and Eranda Sneha are prescribed.</button>
+                        <button type="button" class="example-btn" data-text="Patient has chronic Atisara. Recommended Kutajarishta twice daily.">Patient has chronic Atisara. Recommended Kutajarishta twice daily.</button>
+                        <button type="button" class="example-btn" data-text="Vata dosha imbalance causing Gridhrasi. Kati Basti is indicated.">Vata dosha imbalance causing Gridhrasi. Kati Basti is indicated.</button>
+                        <button type="button" class="example-btn" data-text="Aruchi and Agnimandya treated effectively with Trikatu churna.">Aruchi and Agnimandya treated effectively with Trikatu churna.</button>
+                        <button type="button" class="example-btn" data-text="Excess Pitta dosha leads to severe headache. Advised to avoid spicy foods.">Excess Pitta dosha leads to severe headache. Advised to avoid spicy foods.</button>
+                    </div>
+                </section>
+
+                <div id="loading" class="loading hidden">
+                    <div class="spinner"></div>
+                    <p>Processing clinical intelligence...</p>
+                </div>
+
+                <div id="result-left" class="hidden">
+                    <section class="card" style="border-left: 4px solid #0ea5e9; background-color: #f0f9ff;">
+                        <h3 style="color: #0369a1;">Clinical Summary</h3>
+                        <div id="clinical-summary-container"></div>
+                    </section>
+
+                    <section class="card">
+                        <h3>Analyzed Text</h3>
+                        <div id="highlighted-text" class="highlighted-container"></div>
+                    </section>
+
+                    <section class="card">
+                        <h3>Context Information</h3>
+                        <div id="context-container" class="context-grid"></div>
+                    </section>
+
+                    <section class="card">
+                        <h3>Dosha Analysis</h3>
+                        <div id="dosha-analysis-container"></div>
+                        <div id="dosha-distribution-container" style="margin-top: 1rem;"></div>
+                        <div id="dosha-explanation-container" style="margin-top: 1rem;"></div>
+                    </section>
+
+                    <section class="card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #f1f5f9; padding-bottom:0.75rem; margin-bottom:1rem;">
+                            <h3 style="margin:0; padding:0; border:none;">Treatment Recommendations</h3>
+                            <a href="/dashboard" style="display:inline-block; padding:0.4rem 1rem; background:#0f766e; color:white; text-decoration:none; font-weight:600; font-size:0.85rem; border-radius:6px; transition:all 0.25s ease;">View Model Dashboard</a>
+                        </div>
+                        <div id="suggestions-container"></div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- Right Column: Analytics and Graphs -->
+            <div class="column-right hidden" id="result-right">
+                <section class="card">
+                    <div class="card-header-flex">
+                        <h3>Extracted Entities</h3>
+                        <div class="export-actions">
+                            <button id="copy-json-btn" class="btn btn-small">Copy JSON</button>
+                            <button id="download-json-btn" class="btn btn-small">Download JSON</button>
+                        </div>
+                    </div>
+                    <p class="subtitle">Click on any entity to view normalization details.</p>
+                    <div id="entities-container" class="entities-chips"></div>
+                </section>
+
+                <section class="card">
+                    <h3>Differential Diagnosis</h3>
+                    <div id="diff-diagnosis-container"></div>
+                </section>
+
+                <section class="card">
+                    <h3>Relations</h3>
+                    <ul id="insights-container" class="insights-list"></ul>
+                </section>
+
+                <section class="card">
+                    <h3>Knowledge Graph</h3>
+                    <div id="knowledge-graph" class="graph-container"></div>
+                </section>
+
+                <section class="card">
+                    <h3>Confidence & Explanations</h3>
+                    <div id="confidence-container" class="confidence-list"></div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for Entity Details -->
+    <div id="entity-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Entity Details</h3>
+                <button id="modal-close" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Content injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=11"></script>
+</body>
+</html>
